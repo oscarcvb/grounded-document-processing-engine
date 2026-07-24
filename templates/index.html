@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grounded Document Processing Engine</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f8;
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+            font-size: 18px;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 60px auto;
+            background: white;
+            padding: 44px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 38px;
+        }
+
+        p {
+            line-height: 1.6;
+            font-size: 18px;
+        }
+
+        .note {
+            background-color: #f3f4f6;
+            border-left: 4px solid #2563eb;
+            padding: 16px 18px;
+            margin: 24px 0;
+            border-radius: 6px;
+            font-size: 17px;
+        }
+
+        .upload-group {
+            margin-top: 28px;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 24px;
+            font-size: 18px;
+        }
+
+        .error {
+            color: #b91c1c;
+        }
+
+        .success {
+            color: #166534;
+        }
+
+        .footer {
+            margin-top: 32px;
+            font-size: 16px;
+            color: #6b7280;
+        }
+
+        code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Grounded Document Processing Engine</h1>
+
+        <p>
+            Upload an Excel workbook containing <code>Questions</code> and <code>Context</code> sheets.
+            The system will answer questions using only the provided context and return a completed workbook.
+        </p>
+
+        <div class="note">
+            Demo limitations: maximum 5 questions per workbook. This demo uses a free-tier language model. Processing may take a few seconds.
+        </div>
+
+        <div class="upload-group">
+            <input type="file" id="fileInput" accept=".xlsx" />
+            <button type="button" id="uploadBtn">Upload and Process</button>
+        </div>
+
+        <div id="status" aria-live="polite"></div>
+
+        <div class="footer">
+            Downloaded output file: <code>answered_workbook.xlsx</code>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const statusDiv = document.getElementById("status");
+
+        uploadBtn.addEventListener("click", async () => {
+            const file = fileInput.files[0];
+
+            if (!file) {
+                statusDiv.textContent = "Please select an .xlsx file first.";
+                statusDiv.className = "error";
+                return;
+            }
+
+            statusDiv.textContent = "Uploading and processing file...";
+            statusDiv.className = "";
+            uploadBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append("file", file);
+
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    let errorMessage = "An error occurred while processing the file.";
+
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.detail) {
+                            errorMessage = errorData.detail;
+                        }
+                    } catch {
+                    }
+
+                    statusDiv.textContent = errorMessage;
+                    statusDiv.className = "error";
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "answered_workbook.xlsx";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                statusDiv.textContent = "Success. Your processed workbook has been downloaded.";
+                statusDiv.className = "success";
+            } catch (error) {
+                statusDiv.textContent = "Unexpected error. Please try again.";
+                statusDiv.className = "error";
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

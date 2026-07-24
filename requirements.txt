@@ -3,3 +3,5 @@ openpyxl
 fastapi
 uvicorn
 google-genai
+jinja2
+python-multipart

@@ -1,5 +1,6 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 import pandas as pd
 from io import BytesIO
 from openpyxl import load_workbook
@@ -8,6 +9,8 @@ import os
 import time
 
 app = FastAPI()
+
+templates = Jinja2Templates(directory="templates")
 
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
@@ -46,6 +49,14 @@ Question:
         print(f"Gemini call failed for question: {question}")
         print(f"Error: {e}")
         return "Insufficient information"
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={}
+    )
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
