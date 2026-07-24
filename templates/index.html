@@ -28,9 +28,22 @@
             font-size: 38px;
         }
 
+        h2 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
         p {
             line-height: 1.6;
             font-size: 18px;
+        }
+
+        .step {
+            margin-top: 30px;
+        }
+
+        .step p {
+            margin-bottom: 14px;
         }
 
         .note {
@@ -43,7 +56,7 @@
         }
 
         .upload-group {
-            margin-top: 28px;
+            margin-top: 18px;
         }
 
         input[type="file"] {
@@ -52,7 +65,9 @@
             font-size: 16px;
         }
 
-        button {
+        button,
+        .download-button {
+            display: inline-block;
             background-color: #2563eb;
             color: white;
             border: none;
@@ -60,9 +75,11 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 18px;
+            text-decoration: none;
         }
 
-        button:hover {
+        button:hover,
+        .download-button:hover {
             background-color: #1d4ed8;
         }
 
@@ -90,6 +107,25 @@
             color: #6b7280;
         }
 
+        .author {
+            margin-top: 36px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: right;
+            font-size: 18px;
+            color: #4b5563;
+        }
+
+        .author a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .author a:hover {
+            text-decoration: underline;
+        }
+
         code {
             background-color: #f3f4f6;
             padding: 2px 6px;
@@ -102,23 +138,75 @@
         <h1>Grounded Document Processing Engine</h1>
 
         <p>
-            Upload an Excel workbook containing <code>Questions</code> and <code>Context</code> sheets.
-            The system will answer questions using only the provided context and return a completed workbook.
+            Upload an Excel workbook containing <code>Questions</code> and
+            <code>Context</code> sheets. The system will answer questions
+            using only the provided context and return a completed workbook.
         </p>
 
-        <div class="note">
-            Demo limitations: maximum 5 questions per workbook. This demo uses a free-tier language model. Processing may take a few seconds.
+        <div class="step">
+            <h2>1. Download the test file</h2>
+
+            <p>
+                Download the sample workbook to test the document-processing workflow.
+            </p>
+
+            <a
+                class="download-button"
+                href="https://drive.google.com/uc?export=download&id=1hoY_2f8ayHwxIxrLfniBlUVUmI6JuK5R"
+            >
+                Download Test File
+            </a>
         </div>
 
-        <div class="upload-group">
-            <input type="file" id="fileInput" accept=".xlsx" />
-            <button type="button" id="uploadBtn">Upload and Process</button>
+        <div class="step">
+            <h2>2. Review the workbook</h2>
+
+            <p>
+                Review the existing questions and optionally replace them with your
+                own. Each workbook may contain a maximum of 5 questions.
+            </p>
+
+            <div class="note">
+                <strong>
+                    Note: This demo uses a free-tier language model. Processing may
+                    take approximately 20–30 seconds.
+                </strong>
+            </div>
+        </div>
+
+        <div class="step">
+            <h2>3. Upload the workbook</h2>
+
+            <div class="upload-group">
+                <input type="file" id="fileInput" accept=".xlsx" />
+                <button type="button" id="uploadBtn">Upload and Process</button>
+            </div>
+        </div>
+
+        <div class="step">
+            <h2>4. Wait for the file to process</h2>
+
+            <p>
+                Keep this page open while the workbook is processed. The completed
+                workbook will download automatically when processing is finished.
+            </p>
         </div>
 
         <div id="status" aria-live="polite"></div>
 
         <div class="footer">
             Downloaded output file: <code>answered_workbook.xlsx</code>
+        </div>
+
+        <div class="author">
+            Built by <strong>Oscar Cueva</strong><br />
+            <a
+                href="https://github.com/oscarcvb/grounded-document-processing-engine"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                View the project on GitHub
+            </a>
         </div>
     </div>
 
@@ -150,10 +238,12 @@
                 });
 
                 if (!response.ok) {
-                    let errorMessage = "An error occurred while processing the file.";
+                    let errorMessage =
+                        "An error occurred while processing the file.";
 
                     try {
                         const errorData = await response.json();
+
                         if (errorData.detail) {
                             errorMessage = errorData.detail;
                         }
@@ -168,17 +258,22 @@
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement("a");
+
                 a.href = url;
                 a.download = "answered_workbook.xlsx";
+
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
+
                 window.URL.revokeObjectURL(url);
 
-                statusDiv.textContent = "Success. Your processed workbook has been downloaded.";
+                statusDiv.textContent =
+                    "Success. Your processed workbook has been downloaded.";
                 statusDiv.className = "success";
             } catch (error) {
-                statusDiv.textContent = "Unexpected error. Please try again.";
+                statusDiv.textContent =
+                    "Unexpected error. Please try again.";
                 statusDiv.className = "error";
             } finally {
                 uploadBtn.disabled = false;
